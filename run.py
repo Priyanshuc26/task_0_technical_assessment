@@ -111,3 +111,30 @@ config = parse_config_file(args.config)
 df = load_and_validate_data(args.input)
 df = process_data(df, config['window_size'])
 print(df.head())
+
+
+
+#===============================================================
+# 5. Creating Function for Metric.json
+#===============================================================
+def create_metrics(df, start_time, end_time, config, output_path):
+    Metrics_dict = {
+         "version": config['version'],
+        "rows_processed":df.shape[0],
+        "metric": "signal_rate",
+        "value": df['signal'].mean(),
+        "latency_ms": int((end_time - start_time) * 1000),
+        "seed": config['seed'],
+        "status": "success"
+    }
+    with open(output_path, 'w') as file:
+        json.dump(Metrics_dict, file, indent=4)
+
+def write_error_metrics(error_message, output_path):
+    Metrics_dict = {
+        "version": config['version'],
+        "status": "error",
+        "error_message": error_message,
+    }
+    with open(output_path, 'w') as file:
+        json.dump(Metrics_dict, file, indent=4)
