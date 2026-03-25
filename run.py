@@ -1,4 +1,5 @@
 import pandas as pd
+import csv
 import numpy as np
 import logging
 import argparse
@@ -50,7 +51,7 @@ def parse_config_file(config_path):
         yaml_config = yaml.safe_load(file)
 
     # Checking if the required keys exist in the dictionary
-    required_keys = ['seed', 'window', 'version']
+    required_keys = ['seed', 'window_size', 'version']
     for key in required_keys:
         if key not in yaml_config:
             raise ValueError(f"Config validation failed: '{key}' is missing")
@@ -66,24 +67,47 @@ def parse_config_file(config_path):
 #===============================================================
 def load_and_validate_data(input_path):
     try:
-        df = pd.read_csv(input_path)
+        # Forcing pandas to ignore quotes entirely when splitting
+        df = pd.read_csv(input_path, quoting=csv.QUOTE_NONE)
 
-        # Checking for the missing required column 'closing'
+        # Clean the column headers (remove leftover quotes and spaces)
+        df.columns = df.columns.str.replace('"', '').str.strip().str.lower()
+
+        # Clean the first and last column's data (they have leftover quotes too)
+        df['timestamp'] = df['timestamp'].astype(str).str.replace('"', '')
+        df['volume_usd'] = df['volume_usd'].astype(str).str.replace('"', '')
+
+        # Ensure our 'close' column is strictly numerical for the math
+        df['close'] = pd.to_numeric(df['close'], errors='coerce')
+
+        # Checking for the missing required column
         if 'close' not in df.columns:
             raise ValueError("Data validation failed: 'close' column is missing.")
 
         return df
 
-    # Catching the missing file error
     except FileNotFoundError:
         raise FileNotFoundError(f"Input file not found at path: {input_path}")
-
-    # Catching the empty file error
     except pd.errors.EmptyDataError:
         raise ValueError(f"The provided dataset at {input_path} is completely empty.")
-
-    # Catching the invalid CSV format error
     except pd.errors.ParserError:
         raise ValueError(f"The file at {input_path} is not a valid CSV format.")
 
 
+
+#===============================================================
+# 4. Calculating Rolling Mean and Signal
+#===============================================================
+def process_data(df, window_size):
+    # Calculating the rolling mean
+    df['rolling_mean'] = df['close'].rolling(window=window_size).mean()
+
+    # Generate the binary signal
+    df['signal'] = (df['close'] > df['rolling_mean']).astype(int)
+
+    return df
+
+config = parse_config_file(args.config)
+df = load_and_validate_data(args.input)
+df = process_data(df, config['window_size'])
+print(df.head())
