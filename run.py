@@ -43,7 +43,7 @@ print(args)
 
 
 #===============================================================
-# 2. Configuration & Data Loading (With Validation)
+# 2. Configuration Loading and Validation
 #===============================================================
 def parse_config_file(config_path):
     with open(config_path, 'r') as file:
@@ -62,5 +62,28 @@ def parse_config_file(config_path):
 
 
 #===============================================================
-# 3. Configuration & Data Loading (With Validation)
+# 3. Data Loading and Validation
 #===============================================================
+def load_and_validate_data(input_path):
+    try:
+        df = pd.read_csv(input_path)
+
+        # Checking for the missing required column 'closing'
+        if 'close' not in df.columns:
+            raise ValueError("Data validation failed: 'close' column is missing.")
+
+        return df
+
+    # Catching the missing file error
+    except FileNotFoundError:
+        raise FileNotFoundError(f"Input file not found at path: {input_path}")
+
+    # Catching the empty file error
+    except pd.errors.EmptyDataError:
+        raise ValueError(f"The provided dataset at {input_path} is completely empty.")
+
+    # Catching the invalid CSV format error
+    except pd.errors.ParserError:
+        raise ValueError(f"The file at {input_path} is not a valid CSV format.")
+
+
