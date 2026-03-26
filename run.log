@@ -1,17 +1,17 @@
-2026-03-26 21:16:58 - INFO - Starting MLOps batch processing job at 2026-03-26 21:16:58.015931
-2026-03-26 21:16:58 - INFO - Loading configuration from config.yaml
-2026-03-26 21:16:58 - INFO - Config loaded and validated. Configurations are: {'seed': 42, 'window_size': 5, 'version': 'v1'}
-2026-03-26 21:16:58 - INFO - Setting random seed to 42
-2026-03-26 21:16:58 - INFO - Loading data from data.csv
-2026-03-26 21:16:58 - INFO - Successfully loaded 10000 rows.
-2026-03-26 21:16:58 - INFO - Processing data with rolling window of 5
-2026-03-26 21:16:58 - INFO - Metrics summary: {
+2026-03-26 21:23:05 - INFO - Starting MLOps batch processing job at 2026-03-26 21:23:05.202489
+2026-03-26 21:23:05 - INFO - Loading configuration from config.yaml
+2026-03-26 21:23:05 - INFO - Config loaded and validated. Configurations are: {'seed': 42, 'window_size': 5, 'version': 'v1'}
+2026-03-26 21:23:05 - INFO - Setting random seed to 42
+2026-03-26 21:23:05 - INFO - Loading data from data.csv
+2026-03-26 21:23:05 - INFO - Successfully loaded 10000 rows.
+2026-03-26 21:23:05 - INFO - Processing data with rolling window of 5
+2026-03-26 21:23:05 - INFO - Metrics summary: {
     "version": "v1",
     "rows_processed": 10000,
     "metric": "signal_rate",
     "value": 0.4989,
-    "latency_ms": 90,
+    "latency_ms": 54,
     "seed": 42,
     "status": "success"
 }
-2026-03-26 21:16:58 - INFO - Job ended. status: sucess
+2026-03-26 21:23:05 - INFO - Job ended. status: sucess
