@@ -8,6 +8,7 @@ import json
 import os
 import sys
 import time
+from datetime import datetime
 
 
 #===============================================================
@@ -24,8 +25,8 @@ parser.add_argument("--output", required=True, help="Gives output as metrics in 
 parser.add_argument("--log-file", required=True, help="Gives log file as output on successful run. Define log file name")
 
 # Parsing arguments
-args = parser.parse_args()
-print(args)
+# args = parser.parse_args()
+# print(args)
 
 
 
@@ -56,14 +57,14 @@ def load_and_validate_data(input_path):
         # Forcing pandas to ignore quotes entirely when splitting
         df = pd.read_csv(input_path, quoting=csv.QUOTE_NONE)
 
-        # Clean the column headers (removing leftover quotes and spaces)
+        # Cleaning the column headers by removing leftover quotes and spaces
         df.columns = df.columns.str.replace('"', '').str.strip().str.lower()
 
-        # Clean the first and last column's data (they have leftover quotes too)
+        # Cleaning the first and last column's data as they have leftover quotes
         df['timestamp'] = df['timestamp'].astype(str).str.replace('"', '')
         df['volume_usd'] = df['volume_usd'].astype(str).str.replace('"', '')
 
-        # Ensuring our 'close' column is strictly numerical for the math
+        # Ensuring 'close' column is strictly numerical
         df['close'] = pd.to_numeric(df['close'], errors='coerce')
 
         # Checking for the missing required column
@@ -104,30 +105,32 @@ def process_data(df, window_size):
 # 5. Creating Function for Metric.json
 #===============================================================
 def create_metrics(df, start_time, end_time, config, output_path):
-    Metrics_dict = {
+    metrics_dict = {
          "version": config['version'],
         "rows_processed":df.shape[0],
         "metric": "signal_rate",
-        "value": df['signal'].mean(),
+        "value": float(df['signal'].mean()),
         "latency_ms": int((end_time - start_time) * 1000),
         "seed": config['seed'],
         "status": "success"
     }
     with open(output_path, 'w') as file:
-        json.dump(Metrics_dict, file, indent=4)
+        json.dump(metrics_dict, file, indent=4)
         
-    return Metrics_dict
+    return metrics_dict
+        
+
 
 def write_error_metrics(error_message, output_path):
-    Metrics_dict = {
+    metrics_dict = {
         "version": "v1",
         "status": "error",
         "error_message": error_message,
     }
     with open(output_path, 'w') as file:
-        json.dump(Metrics_dict, file, indent=4)
-        
-    return Metrics_dict
+        json.dump(metrics_dict, file, indent=4)
+    
+    return metrics_dict
 
 
 
@@ -146,9 +149,9 @@ def setup_custom_logger(log_file_path):
         datefmt="%Y-%m-%d %H:%M:%S"
     )
 
-    console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setFormatter(logging.Formatter(log_format))
-    logging.getLogger().addHandler(console_handler)
+    # console_handler = logging.StreamHandler(sys.stdout)
+    # console_handler.setFormatter(logging.Formatter(log_format))
+    # logging.getLogger().addHandler(console_handler)
 
 
 
@@ -161,9 +164,9 @@ if __name__ == "__main__":
     # 1. Parse arguments
     args = parser.parse_args()
 
-    # 2. Start the custom logger using the CLI argument
+    # 2. Starting the custom logger using the CLI argument
     setup_custom_logger(args.log_file)
-    logging.info("Starting MLOps batch processing job...")
+    logging.info(f"Starting MLOps batch processing job at {datetime.now()}")
 
     try:
         # Start time
@@ -190,9 +193,12 @@ if __name__ == "__main__":
         # End Time
         end_time = time.time()
         metrics_summary = create_metrics(df, start_time, end_time, config_data, args.output)
-        logging.info(f"Job completed successfully. Metrics summary: {metrics_summary}")
+        print(f"Metrics summary: {metrics_summary}")
+        logging.info(f"Metrics summary: {metrics_summary}")
+        logging.info(f"Job ended. satus: sucess")
 
     except Exception as e:
         error_metric_summary = write_error_metrics(str(e), args.output)
+        print(error_metric_summary)
         logging.error(f"Job failed. Error Metrics summary: {error_metric_summary}")
-
+        sys.exit(1) # Force exit with non zero, so that if any error occurs, Docker knows that it is failed
