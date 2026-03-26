@@ -117,7 +117,7 @@ def create_metrics(df, start_time, end_time, config, output_path):
     with open(output_path, 'w') as file:
         json.dump(metrics_dict, file, indent=4)
         
-    return metrics_dict
+    return(json.dumps(metrics_dict, indent=4))
         
 
 
@@ -130,7 +130,7 @@ def write_error_metrics(error_message, output_path):
     with open(output_path, 'w') as file:
         json.dump(metrics_dict, file, indent=4)
     
-    return metrics_dict
+    return(json.dumps(metrics_dict, indent=4))
 
 
 
@@ -193,9 +193,9 @@ if __name__ == "__main__":
         # End Time
         end_time = time.time()
         metrics_summary = create_metrics(df, start_time, end_time, config_data, args.output)
-        print(f"Metrics summary: {metrics_summary}")
+        print(metrics_summary)
         logging.info(f"Metrics summary: {metrics_summary}")
-        logging.info(f"Job ended. satus: sucess")
+        logging.info(f"Job ended. status: sucess")
 
     except Exception as e:
         error_metric_summary = write_error_metrics(str(e), args.output)
