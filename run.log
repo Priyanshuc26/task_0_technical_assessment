@@ -1,0 +1,8 @@
+2026-03-26 18:02:02 - INFO - Starting MLOps batch processing job...
+2026-03-26 18:02:02 - INFO - Loading configuration from config.yaml
+2026-03-26 18:02:02 - INFO - Config loaded and validated. Configurations are: {'seed': 42, 'window_size': 5, 'version': 'v1'}
+2026-03-26 18:02:02 - INFO - Setting random seed to 42
+2026-03-26 18:02:02 - INFO - Loading data from data.csv
+2026-03-26 18:02:02 - INFO - Successfully loaded 10000 rows.
+2026-03-26 18:02:02 - INFO - Processing data with rolling window of 5
+2026-03-26 18:02:02 - INFO - Job completed successfully. Metrics summary: {'version': 'v1', 'rows_processed': 10000, 'metric': 'signal_rate', 'value': np.float64(0.4989), 'latency_ms': 46, 'seed': 42, 'status': 'success'}

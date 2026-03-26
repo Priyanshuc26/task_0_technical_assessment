@@ -7,21 +7,7 @@ import yaml
 import json
 import os
 import sys
-
-#===============================================================
-# 1. Implementing Custom Exception Class for Exception Handling
-#===============================================================
-# class CustomException (Exception):
-#     def __init__(self, error_message, error_details:sys):
-#         self.error_message = error_message
-#
-#         _, _,  exc_tb = error_details.exc_info()
-#         self.lineno=exc_tb.tb_lineno
-#         self.file_name=exc_tb.tb_frame.f_code.co_filename
-#
-#     def _str_(self):
-#         return "Error occurred in python script name [{0}] line number [{1}] error message [{2}]".format(self.file_name, self.lineno, str(self.error_message))
-
+import time
 
 
 #===============================================================
@@ -70,14 +56,14 @@ def load_and_validate_data(input_path):
         # Forcing pandas to ignore quotes entirely when splitting
         df = pd.read_csv(input_path, quoting=csv.QUOTE_NONE)
 
-        # Clean the column headers (remove leftover quotes and spaces)
+        # Clean the column headers (removing leftover quotes and spaces)
         df.columns = df.columns.str.replace('"', '').str.strip().str.lower()
 
         # Clean the first and last column's data (they have leftover quotes too)
         df['timestamp'] = df['timestamp'].astype(str).str.replace('"', '')
         df['volume_usd'] = df['volume_usd'].astype(str).str.replace('"', '')
 
-        # Ensure our 'close' column is strictly numerical for the math
+        # Ensuring our 'close' column is strictly numerical for the math
         df['close'] = pd.to_numeric(df['close'], errors='coerce')
 
         # Checking for the missing required column
@@ -107,10 +93,10 @@ def process_data(df, window_size):
 
     return df
 
-config = parse_config_file(args.config)
-df = load_and_validate_data(args.input)
-df = process_data(df, config['window_size'])
-print(df.head())
+# config = parse_config_file(args.config)
+# df = load_and_validate_data(args.input)
+# df = process_data(df, config['window_size'])
+# print(df.head())
 
 
 
@@ -129,38 +115,84 @@ def create_metrics(df, start_time, end_time, config, output_path):
     }
     with open(output_path, 'w') as file:
         json.dump(Metrics_dict, file, indent=4)
+        
+    return Metrics_dict
 
 def write_error_metrics(error_message, output_path):
     Metrics_dict = {
-        "version": config['version'],
+        "version": "v1",
         "status": "error",
         "error_message": error_message,
     }
     with open(output_path, 'w') as file:
         json.dump(Metrics_dict, file, indent=4)
+        
+    return Metrics_dict
 
 
 
 # ===============================================================
-# Logging Configuration
+# 6. Logging Configuration
 # ===============================================================
 def setup_custom_logger(log_file_path):
-    # 1. Define the custom format: [Timestamp] - [Level] - [Message]
+    # Custom format: [Timestamp] - [Level] - [Message]
     log_format = "%(asctime)s - %(levelname)s - %(message)s"
 
-    # 2. Configure the root logger to write to your file
+    # Configuring the root logger
     logging.basicConfig(
         filename=log_file_path,
-        level=logging.INFO,  # This catches INFO, WARNING, ERROR
+        level=logging.INFO,
         format=log_format,
         datefmt="%Y-%m-%d %H:%M:%S"
     )
 
-    # 3. Pro-Tip: Add a "StreamHandler" so logs also print to your terminal
-    # while running, saving you from having to open the log file every time!
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setFormatter(logging.Formatter(log_format))
     logging.getLogger().addHandler(console_handler)
 
 
+
+
+
+# ===============================================================
+# Setting up the Pipeline
+# ===============================================================
+if __name__ == "__main__":
+    # 1. Parse arguments
+    args = parser.parse_args()
+
+    # 2. Start the custom logger using the CLI argument
+    setup_custom_logger(args.log_file)
+    logging.info("Starting MLOps batch processing job...")
+
+    try:
+        # Start time
+        start_time = time.time()
+
+        # Load Config
+        logging.info(f"Loading configuration from {args.config}")
+        config_data = parse_config_file(args.config)
+        logging.info(f"Config loaded and validated. Configurations are: {config_data}")
+
+        # Set Seed
+        logging.info(f"Setting random seed to {config_data['seed']}")
+        np.random.seed(config_data['seed'])
+
+        # Load Data
+        logging.info(f"Loading data from {args.input}")
+        df = load_and_validate_data(args.input)
+        logging.info(f"Successfully loaded {df.shape[0]} rows.")
+
+        # Process Data
+        logging.info(f"Processing data with rolling window of {config_data['window_size']}")
+        df = process_data(df, config_data['window_size'])
+
+        # End Time
+        end_time = time.time()
+        metrics_summary = create_metrics(df, start_time, end_time, config_data, args.output)
+        logging.info(f"Job completed successfully. Metrics summary: {metrics_summary}")
+
+    except Exception as e:
+        error_metric_summary = write_error_metrics(str(e), args.output)
+        logging.error(f"Job failed. Error Metrics summary: {error_metric_summary}")
 
