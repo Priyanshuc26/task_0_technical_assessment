@@ -138,3 +138,29 @@ def write_error_metrics(error_message, output_path):
     }
     with open(output_path, 'w') as file:
         json.dump(Metrics_dict, file, indent=4)
+
+
+
+# ===============================================================
+# Logging Configuration
+# ===============================================================
+def setup_custom_logger(log_file_path):
+    # 1. Define the custom format: [Timestamp] - [Level] - [Message]
+    log_format = "%(asctime)s - %(levelname)s - %(message)s"
+
+    # 2. Configure the root logger to write to your file
+    logging.basicConfig(
+        filename=log_file_path,
+        level=logging.INFO,  # This catches INFO, WARNING, ERROR
+        format=log_format,
+        datefmt="%Y-%m-%d %H:%M:%S"
+    )
+
+    # 3. Pro-Tip: Add a "StreamHandler" so logs also print to your terminal
+    # while running, saving you from having to open the log file every time!
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setFormatter(logging.Formatter(log_format))
+    logging.getLogger().addHandler(console_handler)
+
+
+
